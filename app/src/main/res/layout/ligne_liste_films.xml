@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@android:color/white"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:descendantFocusability="blocksDescendants">
+
+    <!-- Image du film (placeholder) -->
+    <ImageView
+        android:id="@+id/imageFilm"
+        android:layout_width="60dp"
+        android:layout_height="90dp"
+        android:background="@android:color/darker_gray"
+        android:scaleType="centerCrop"
+        android:layout_marginEnd="16dp"
+        android:clickable="false"
+        android:focusable="false"/>
+
+    <!-- Informations du film -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:clickable="false"
+        android:focusable="false">
+
+        <TextView
+            android:id="@+id/textNomFilm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="L'Odyssée"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp"
+            android:clickable="false"
+            android:focusable="false"/>
+
+        <TextView
+            android:id="@+id/textTypeFilm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Site"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:clickable="false"
+            android:focusable="false"/>
+
+    </LinearLayout>
+
+    <!-- Boutons Détail et Ajouter -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnDetail"
+            android:layout_width="70dp"
+            android:layout_height="36dp"
+            android:text="Détail"
+            android:textSize="12sp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginEnd="6dp"
+            android:backgroundTint="@android:color/darker_gray"/>
+
+        <Button
+            android:id="@+id/btnAjouter"
+            android:layout_width="70dp"
+            android:layout_height="36dp"
+            android:text="Ajouter"
+            android:textSize="12sp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:backgroundTint="@android:color/darker_gray"/>
+
+    </LinearLayout>
+
+</LinearLayout>
