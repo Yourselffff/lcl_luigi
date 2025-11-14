@@ -27,20 +27,25 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
  
-public class ListefilmsActivity extends AppCompatActivity {
+public class ListefilmsActivity extends AppCompatActivity implements Panier.PanierChangeListener {
 
     private String listeFilmsResultat = "";
     private ArrayList<Film> filmArrayComplet = new ArrayList<>(); // Liste complète des films
     private ArrayAdapter<Film> adapter; // Adapter pour la recherche
     private ProgressBar progressBar; // Indicateur de chargement
+    private TextView tvPanierBadge; // Badge du panier
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listefilms);
 
-        // Initialiser le ProgressBar
+        // Initialiser le ProgressBar et le badge du panier
         progressBar = findViewById(R.id.progressBar);
+        tvPanierBadge = findViewById(R.id.tvPanierBadge);
+
+        // Enregistrer le listener pour les changements du panier
+        Panier.getInstance().setListener(this);
 
         // Configurer la barre de recherche
         EditText searchBar = findViewById(R.id.searchBar);
@@ -215,6 +220,32 @@ public class ListefilmsActivity extends AppCompatActivity {
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
     }
     */
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Mettre à jour le badge du panier quand on revient sur la page
+        mettreAJourBadgePanier();
+    }
+
+    // Méthode pour mettre à jour le badge du panier
+    private void mettreAJourBadgePanier() {
+        int nombreArticles = Panier.getInstance().getNombreItems();
+
+        if (nombreArticles > 0) {
+            tvPanierBadge.setText(String.valueOf(nombreArticles));
+            tvPanierBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvPanierBadge.setVisibility(View.GONE);
+        }
+    }
+
+    // Implémentation de PanierChangeListener
+    @Override
+    public void onPanierChanged() {
+        // Mettre à jour le badge en temps réel
+        mettreAJourBadgePanier();
+    }
 
     public void onPanierClicked(View view) {
         Log.d("ListefilmsActivity", "Ouverture du panier");

@@ -32,14 +32,35 @@
             android:textStyle="bold"
             android:gravity="center"/>
 
-        <ImageButton
-            android:id="@+id/btnPanier"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_add"
-            android:onClick="onPanierClicked"
-            android:contentDescription="Panier"/>
+        <!-- Badge du panier avec compteur -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnPanier"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_add"
+                android:onClick="onPanierClicked"
+                android:contentDescription="Panier"/>
+
+            <!-- Badge de compteur -->
+            <TextView
+                android:id="@+id/tvPanierBadge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="#FF0000"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+        </FrameLayout>
     </LinearLayout>
 
     <!-- Barre de recherche -->

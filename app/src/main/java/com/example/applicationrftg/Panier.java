@@ -8,11 +8,19 @@ import java.util.ArrayList;
  */
 public class Panier {
 
+    // Interface pour notifier les changements du panier
+    public interface PanierChangeListener {
+        void onPanierChanged();
+    }
+
     // Instance unique (Singleton)
     private static Panier instance;
 
     // ArrayList pour stocker les films avec leur quantité
     private ArrayList<ItemPanier> items;
+
+    // Listener pour notifier les changements
+    private PanierChangeListener listener;
 
     // Constructeur privé pour le Singleton
     private Panier() {
@@ -27,6 +35,18 @@ public class Panier {
         return instance;
     }
 
+    // Définir le listener pour les changements
+    public void setListener(PanierChangeListener listener) {
+        this.listener = listener;
+    }
+
+    // Notifier les changements
+    private void notifierChangement() {
+        if (listener != null) {
+            listener.onPanierChanged();
+        }
+    }
+
     // Ajouter un film au panier
     public void ajouterFilm(Film film) {
         // Vérifier si le film existe déjà dans le panier
@@ -34,11 +54,13 @@ public class Panier {
             if (item.getFilm().getFilm_id().equals(film.getFilm_id())) {
                 // Augmenter la quantité
                 item.setQuantite(item.getQuantite() + 1);
+                notifierChangement();
                 return;
             }
         }
         // Si le film n'existe pas, l'ajouter avec quantité 1
         items.add(new ItemPanier(film, 1));
+        notifierChangement();
     }
 
     // Supprimer un film du panier
@@ -46,6 +68,7 @@ public class Panier {
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i).getFilm().getFilm_id().equals(filmId)) {
                 items.remove(i);
+                notifierChangement();
                 return;
             }
         }
@@ -61,6 +84,7 @@ public class Panier {
         for (ItemPanier item : items) {
             if (item.getFilm().getFilm_id().equals(filmId)) {
                 item.setQuantite(nouvelleQuantite);
+                notifierChangement();
                 return;
             }
         }
@@ -74,6 +98,7 @@ public class Panier {
     // Vider le panier
     public void viderPanier() {
         items.clear();
+        notifierChangement();
     }
 
     // Obtenir le nombre total d'items
