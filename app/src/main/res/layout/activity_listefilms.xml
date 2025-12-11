@@ -32,6 +32,17 @@
             android:textStyle="bold"
             android:gravity="center"/>
 
+        <!-- Bouton de déconnexion -->
+        <ImageButton
+            android:id="@+id/btnDeconnexion"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginRight="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_lock_power_off"
+            android:onClick="onDeconnexionClicked"
+            android:contentDescription="Déconnexion"/>
+
         <!-- Badge du panier avec compteur -->
         <FrameLayout
             android:layout_width="wrap_content"

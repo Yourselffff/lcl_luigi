@@ -34,11 +34,24 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
     private ArrayAdapter<Film> adapter; // Adapter pour la recherche
     private ProgressBar progressBar; // Indicateur de chargement
     private TextView tvPanierBadge; // Badge du panier
+    private SessionManager sessionManager; // Gestionnaire de session
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listefilms);
+
+        // Initialiser le SessionManager
+        sessionManager = new SessionManager(this);
+
+        // Vérifier si l'utilisateur est connecté
+        if (!sessionManager.isLoggedIn()) {
+            // Rediriger vers la page de connexion
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
         // Initialiser le ProgressBar et le badge du panier
         progressBar = findViewById(R.id.progressBar);
@@ -250,5 +263,20 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
     public void onPanierClicked(View view) {
         Log.d("ListefilmsActivity", "Ouverture du panier");
         startActivity(new Intent(this, PanierActivity.class));
+    }
+
+    public void onDeconnexionClicked(View view) {
+        Log.d("ListefilmsActivity", "Déconnexion de l'utilisateur");
+
+        // Déconnecter l'utilisateur
+        sessionManager.logout();
+
+        // Vider le panier
+        Panier.getInstance().viderPanier();
+
+        // Rediriger vers la page de connexion
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

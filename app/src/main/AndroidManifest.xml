@@ -19,8 +19,9 @@
         <activity android:name=".DetailfilmActivity" />
         <activity android:name=".PanierActivity" />
         <activity android:name=".ListefilmsActivity" />
+        <activity android:name=".MainActivity" />
         <activity
-            android:name=".MainActivity"
+            android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
