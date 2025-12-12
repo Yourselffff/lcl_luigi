@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
@@ -82,8 +83,14 @@ public class LoginActivity extends AppCompatActivity {
         progressBarLogin.setVisibility(View.VISIBLE);
         btnLogin.setEnabled(false);
 
-        // Créer l'objet LoginRequest
-        LoginRequest loginRequest = new LoginRequest(email, password);
+        // Encrypter le mot de passe en MD5
+        String passwordEncrypte = encrypterChaineMD5(password);
+
+        // Log pour voir le mot de passe encrypté
+        Log.d("mydebug", ">>>Mot de passe encrypté en MD5: " + passwordEncrypte);
+
+        // Créer l'objet LoginRequest avec le mot de passe encrypté
+        LoginRequest loginRequest = new LoginRequest(email, passwordEncrypte);
 
         // Convertir en JSON
         Gson gson = new Gson();
@@ -151,5 +158,29 @@ public class LoginActivity extends AppCompatActivity {
             tvErreurLogin.setText("Erreur de connexion");
             tvErreurLogin.setVisibility(View.VISIBLE);
         }
+    }
+
+    // ENCRYPTAGE EN MD5
+    private String encrypterChaineMD5(String chaine) {
+        byte[] chaineBytes = chaine.getBytes();
+        byte[] hash = null;
+        try {
+            hash = MessageDigest.getInstance("MD5").digest(chaineBytes);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        StringBuffer hashString = new StringBuffer();
+        for (int i=0; i<hash.length; ++i ) {
+            String hex = Integer.toHexString(hash[i]);
+            if (hex.length() == 1) {
+                hashString.append('0');
+                hashString.append(hex.charAt(hex.length()-1));
+            }
+            else {
+                hashString.append(hex.substring(hex.length()-2));
+            }
+        }
+        return hashString.toString();
     }
 }

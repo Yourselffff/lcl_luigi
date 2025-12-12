@@ -158,6 +158,9 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
                 textNomFilm.setText(film.getTitle());
                 textTypeFilm.setText("DVD"); // Ou utiliser un champ du film si disponible
 
+                // Vérifier la disponibilité du film
+                verifierDisponibilite(film.getFilm_id(), btnAjouter);
+
                 // Bouton Détail
                 btnDetail.setOnClickListener(v -> {
                     Log.d("mydebug","clic sur détail du film: " + film.getTitle());
@@ -278,5 +281,21 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    // Vérifier la disponibilité d'un film
+    private void verifierDisponibilite(String filmId, Button btnAjouter) {
+        URL urlAAppeler = null;
+        try {
+            urlAAppeler = new URL("http://10.0.2.2:8180/inventories/available/film/" + filmId);
+            new CheckAvailabilityTask(btnAjouter, filmId).execute(urlAAppeler);
+        } catch (MalformedURLException mue) {
+            Log.d("mydebug", ">>>Pour CheckAvailabilityTask - MalformedURLException mue=" + mue.toString());
+            // En cas d'erreur, désactiver le bouton par sécurité
+            btnAjouter.setEnabled(false);
+            btnAjouter.setText("Erreur");
+        } finally {
+            urlAAppeler = null;
+        }
     }
 }
