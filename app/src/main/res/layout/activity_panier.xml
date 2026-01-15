@@ -50,22 +50,12 @@
         android:gravity="center"
         android:visibility="gone"/>
 
-    <!-- Section prix total et boutons -->
+    <!-- Section boutons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginTop="16dp">
-
-        <TextView
-            android:id="@+id/tvPrixTotal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total: 0.00 €"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="end"
-            android:layout_marginBottom="16dp"/>
 
         <Button
             android:id="@+id/btnViderPanier"

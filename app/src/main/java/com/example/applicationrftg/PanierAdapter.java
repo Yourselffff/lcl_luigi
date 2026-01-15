@@ -57,10 +57,6 @@ public class PanierAdapter extends BaseAdapter {
             holder = new ViewHolder();
             holder.tvTitre = convertView.findViewById(R.id.tvItemTitre);
             holder.tvType = convertView.findViewById(R.id.tvItemType);
-            holder.tvQuantite = convertView.findViewById(R.id.tvQuantite);
-            holder.tvPrix = convertView.findViewById(R.id.tvItemPrix);
-            holder.btnDiminuer = convertView.findViewById(R.id.btnDiminuer);
-            holder.btnAugmenter = convertView.findViewById(R.id.btnAugmenter);
             holder.btnSupprimer = convertView.findViewById(R.id.btnSupprimer);
             convertView.setTag(holder);
         } else {
@@ -74,36 +70,30 @@ public class PanierAdapter extends BaseAdapter {
         // Remplir les vues avec les données
         holder.tvTitre.setText(film.getTitle());
         holder.tvType.setText("DVD"); // Ou autre type selon vos données
-        holder.tvQuantite.setText(String.valueOf(item.getQuantite()));
-        holder.tvPrix.setText(String.format(Locale.FRANCE, "%.2f €", item.getPrixTotal()));
-
-        // Bouton diminuer quantité
-        holder.btnDiminuer.setOnClickListener(v -> {
-            int nouvelleQuantite = item.getQuantite() - 1;
-            if (nouvelleQuantite > 0) {
-                Panier.getInstance().modifierQuantite(film.getFilm_id(), nouvelleQuantite);
-            } else {
-                Panier.getInstance().supprimerFilm(film.getFilm_id());
-            }
-            if (listener != null) {
-                listener.onPanierChanged();
-            }
-        });
-
-        // Bouton augmenter quantité
-        holder.btnAugmenter.setOnClickListener(v -> {
-            int nouvelleQuantite = item.getQuantite() + 1;
-            Panier.getInstance().modifierQuantite(film.getFilm_id(), nouvelleQuantite);
-            if (listener != null) {
-                listener.onPanierChanged();
-            }
-        });
 
         // Bouton supprimer
         holder.btnSupprimer.setOnClickListener(v -> {
-            Panier.getInstance().supprimerFilm(film.getFilm_id());
-            if (listener != null) {
-                listener.onPanierChanged();
+            // Récupérer le rentalId avant de supprimer
+            int rentalId = item.getRentalId();
+
+            if (rentalId > 0 && listener != null && listener instanceof PanierActivity) {
+                // Appeler l'API pour supprimer du panier
+                PanierActivity activity = (PanierActivity) listener;
+                try {
+                    java.net.URL urlAAppeler = new java.net.URL("http://10.0.2.2:8180/cart/" + rentalId);
+                    new RemoveFromCartTask(activity, String.valueOf(rentalId)).execute(urlAAppeler);
+                } catch (java.net.MalformedURLException mue) {
+                    android.util.Log.d("mydebug", ">>>Pour RemoveFromCartTask - MalformedURLException mue=" + mue.toString());
+                    // En cas d'erreur, supprimer quand même localement
+                    Panier.getInstance().supprimerFilm(film.getFilm_id());
+                    listener.onPanierChanged();
+                }
+            } else {
+                // Pas de rentalId, supprimer seulement localement
+                Panier.getInstance().supprimerFilm(film.getFilm_id());
+                if (listener != null) {
+                    listener.onPanierChanged();
+                }
             }
         });
 
@@ -114,10 +104,6 @@ public class PanierAdapter extends BaseAdapter {
     static class ViewHolder {
         TextView tvTitre;
         TextView tvType;
-        TextView tvQuantite;
-        TextView tvPrix;
-        Button btnDiminuer;
-        Button btnAugmenter;
         Button btnSupprimer;
     }
 }

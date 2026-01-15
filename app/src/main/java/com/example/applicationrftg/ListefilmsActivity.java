@@ -173,9 +173,24 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
                 // Bouton Ajouter au panier
                 btnAjouter.setOnClickListener(v -> {
                     Log.d("mydebug","Ajout au panier: " + film.getTitle());
-                    // Ajouter au panier (principe du cours : Singleton)
-                    Panier.getInstance().ajouterFilm(film);
-                    Toast.makeText(ListefilmsActivity.this, "Film ajouté au panier", Toast.LENGTH_SHORT).show();
+
+                    int customerId = sessionManager.getCustomerId();
+                    if (customerId == -1) {
+                        Toast.makeText(ListefilmsActivity.this, "Erreur: Utilisateur non connecté", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Appeler l'API pour ajouter le film au panier
+                    URL urlAAppeler = null;
+                    try {
+                        urlAAppeler = new URL("http://10.0.2.2:8180/cart/add");
+                        new AddToCartTask(ListefilmsActivity.this, film.getFilm_id(), String.valueOf(customerId)).execute(urlAAppeler);
+                    } catch (MalformedURLException mue) {
+                        Log.d("mydebug", ">>>Pour AddToCartTask - MalformedURLException mue=" + mue.toString());
+                        Toast.makeText(ListefilmsActivity.this, "Erreur lors de l'ajout au panier", Toast.LENGTH_SHORT).show();
+                    } finally {
+                        urlAAppeler = null;
+                    }
                 });
 
                 return convertView;
@@ -296,6 +311,83 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
             btnAjouter.setText("Erreur");
         } finally {
             urlAAppeler = null;
+        }
+    }
+
+    // Callback appelé après l'ajout au panier via l'API depuis la liste
+    public void filmAjouteAuPanierAvecSucces(String resultat) {
+        Log.d("mydebug", ">>>Film ajouté au panier depuis la liste: " + resultat);
+
+        if (resultat != null && !resultat.equals("ERROR")) {
+            Toast.makeText(this, "Film ajouté au panier", Toast.LENGTH_SHORT).show();
+
+            // Recharger le panier local pour synchroniser
+            int customerId = sessionManager.getCustomerId();
+            if (customerId != -1) {
+                chargerPanierDepuisAPI(customerId);
+            }
+        } else {
+            Toast.makeText(this, "Erreur: Film non disponible ou déjà dans le panier", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // Charger le panier depuis l'API pour synchroniser le badge
+    private void chargerPanierDepuisAPI(int customerId) {
+        URL urlAAppeler = null;
+        try {
+            urlAAppeler = new URL("http://10.0.2.2:8180/cart/" + customerId);
+            new GetCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
+        } catch (MalformedURLException mue) {
+            Log.d("mydebug", ">>>Pour GetCartTask - MalformedURLException mue=" + mue.toString());
+        } finally {
+            urlAAppeler = null;
+        }
+    }
+
+    // Callback appelé après la récupération du panier depuis l'API
+    public void mettreAJourPanierApresAppelRest(String resultatAppelRest) {
+        Log.d("mydebug", ">>>Panier reçu dans ListefilmsActivity: " + resultatAppelRest);
+
+        if (resultatAppelRest == null || resultatAppelRest.trim().isEmpty() || resultatAppelRest.equals("[]")) {
+            // Aucun item dans le panier
+            Panier.getInstance().viderPanier();
+            mettreAJourBadgePanier();
+            return;
+        }
+
+        try {
+            // Parser le JSON en liste de CartItem
+            Gson gson = new Gson();
+            Type cartListType = new TypeToken<ArrayList<CartItem>>(){}.getType();
+            ArrayList<CartItem> cartItems = gson.fromJson(resultatAppelRest, cartListType);
+
+            if (cartItems != null && !cartItems.isEmpty()) {
+                // Synchroniser avec le panier local pour l'affichage
+                Panier.getInstance().viderPanier();
+
+                for (CartItem item : cartItems) {
+                    Film film = item.getFilm();
+                    if (film == null) {
+                        film = new Film();
+                        film.setFilm_id(item.getFilmId());
+                        film.setTitle(item.getFilmTitle());
+                    }
+                    Panier.getInstance().ajouterFilm(film);
+
+                    // IMPORTANT: Stocker le rentalId pour pouvoir supprimer via l'API
+                    ItemPanier itemPanier = Panier.getInstance().trouverItem(film.getFilm_id());
+                    if (itemPanier != null) {
+                        itemPanier.setRentalId(item.getRentalId());
+                    }
+                }
+            } else {
+                Panier.getInstance().viderPanier();
+            }
+
+            mettreAJourBadgePanier();
+        } catch (Exception e) {
+            Log.e("mydebug", ">>>Erreur parsing panier dans ListefilmsActivity: " + e.toString());
+            mettreAJourBadgePanier();
         }
     }
 }

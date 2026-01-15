@@ -129,4 +129,14 @@ public class Panier {
         }
         return total;
     }
+
+    // Trouver un ItemPanier par filmId
+    public ItemPanier trouverItem(String filmId) {
+        for (ItemPanier item : items) {
+            if (item.getFilm().getFilm_id().equals(filmId)) {
+                return item;
+            }
+        }
+        return null;
+    }
 }
