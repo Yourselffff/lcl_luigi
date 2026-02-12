@@ -80,7 +80,8 @@ public class PanierAdapter extends BaseAdapter {
                 // Appeler l'API pour supprimer du panier
                 PanierActivity activity = (PanierActivity) listener;
                 try {
-                    java.net.URL urlAAppeler = new java.net.URL("http://10.0.2.2:8180/cart/" + rentalId);
+                    SessionManager sessionManager = new SessionManager(activity);
+                    java.net.URL urlAAppeler = new java.net.URL(sessionManager.getBaseUrl() + "/cart/" + rentalId);
                     new RemoveFromCartTask(activity, String.valueOf(rentalId)).execute(urlAAppeler);
                 } catch (java.net.MalformedURLException mue) {
                     android.util.Log.d("mydebug", ">>>Pour RemoveFromCartTask - MalformedURLException mue=" + mue.toString());

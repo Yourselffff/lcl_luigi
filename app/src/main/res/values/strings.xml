@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">applicationrftg</string>
+    <!-- Token API -->
+    <string name="api_token">Bearer eyJhbGciOiJIUzI1NiJ9.e30.jg2m4pLbAlZv1h5uPQ6fU38X23g65eXMX8q-SXuIPDg</string>
+    <!-- Liste déroulante serveur -->
+    <string-array name="listeURLs">
+        <item>http://10.0.2.2:8180</item>
+        <item>http://rftg.mtb111.com</item>
+    </string-array>
 </resources>

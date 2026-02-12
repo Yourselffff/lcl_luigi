@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private ProgressBar progressBarLogin;
     private TextView tvErreurLogin;
+    private Spinner spinnerServeur;
     private SessionManager sessionManager;
 
     @Override
@@ -50,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         progressBarLogin = findViewById(R.id.progressBarLogin);
         tvErreurLogin = findViewById(R.id.tvErreurLogin);
+        spinnerServeur = findViewById(R.id.spinnerServeur);
 
         // Listener sur le bouton de connexion
         btnLogin.setOnClickListener(new View.OnClickListener() {
@@ -96,10 +99,15 @@ public class LoginActivity extends AppCompatActivity {
         Gson gson = new Gson();
         String jsonBody = gson.toJson(loginRequest);
 
+        // Sauvegarder l'URL choisie dans le Spinner
+        String baseUrl = spinnerServeur.getSelectedItem().toString();
+        sessionManager.saveBaseUrl(baseUrl);
+        Log.d("mydebug", ">>>URL de base choisie: " + baseUrl);
+
         // Appel REST
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/customers/verify");
+            urlAAppeler = new URL(baseUrl + "/customers/verify");
             new LoginTask(this, jsonBody).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour LoginTask - MalformedURLException mue=" + mue.toString());

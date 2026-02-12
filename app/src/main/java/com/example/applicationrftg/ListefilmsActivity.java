@@ -83,7 +83,7 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
 
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/films");
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films");
             new ListefilmsTask(this).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug",">>>Pour ListefilmsTask - MalformedURLException mue="+mue.toString());
@@ -183,7 +183,7 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
                     // Appeler l'API pour ajouter le film au panier
                     URL urlAAppeler = null;
                     try {
-                        urlAAppeler = new URL("http://10.0.2.2:8180/cart/add");
+                        urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/add");
                         new AddToCartTask(ListefilmsActivity.this, film.getFilm_id(), String.valueOf(customerId)).execute(urlAAppeler);
                     } catch (MalformedURLException mue) {
                         Log.d("mydebug", ">>>Pour AddToCartTask - MalformedURLException mue=" + mue.toString());
@@ -302,7 +302,7 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
     private void verifierDisponibilite(String filmId, Button btnAjouter) {
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/inventories/available/film/" + filmId);
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/inventories/available/film/" + filmId);
             new CheckAvailabilityTask(btnAjouter, filmId).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour CheckAvailabilityTask - MalformedURLException mue=" + mue.toString());
@@ -335,7 +335,7 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
     private void chargerPanierDepuisAPI(int customerId) {
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/cart/" + customerId);
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/" + customerId);
             new GetCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour GetCartTask - MalformedURLException mue=" + mue.toString());
@@ -383,7 +383,6 @@ public class ListefilmsActivity extends AppCompatActivity implements Panier.Pani
             } else {
                 Panier.getInstance().viderPanier();
             }
-
             mettreAJourBadgePanier();
         } catch (Exception e) {
             Log.e("mydebug", ">>>Erreur parsing panier dans ListefilmsActivity: " + e.toString());

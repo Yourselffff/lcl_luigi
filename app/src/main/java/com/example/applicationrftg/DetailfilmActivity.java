@@ -70,7 +70,7 @@ public class DetailfilmActivity extends AppCompatActivity {
         // Appeler le service REST pour récupérer les détails du film
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/films/" + filmId);
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/" + filmId);
             new DetailfilmTask(this).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug",">>>Pour DetailfilmTask - MalformedURLException mue="+mue.toString());
@@ -190,7 +190,7 @@ public class DetailfilmActivity extends AppCompatActivity {
     private void chargerCommentaires() {
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/films/commentaire");
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/commentaire");
             new GetCommentsTask(this, filmId).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour GetCommentsTask - MalformedURLException mue=" + mue.toString());
@@ -342,7 +342,7 @@ public class DetailfilmActivity extends AppCompatActivity {
 
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/films/commentaire/add");
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/commentaire/add");
             new AddCommentTask(this, filmId, String.valueOf(customerId), commentText).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour AddCommentTask - MalformedURLException mue=" + mue.toString());
@@ -380,7 +380,7 @@ public class DetailfilmActivity extends AppCompatActivity {
         // Appeler l'API pour ajouter le film au panier
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/cart/add");
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/add");
             new AddToCartTask(this, filmId, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour AddToCartTask - MalformedURLException mue=" + mue.toString());

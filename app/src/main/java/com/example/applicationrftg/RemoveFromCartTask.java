@@ -49,7 +49,7 @@ public class RemoveFromCartTask extends AsyncTask<URL,Integer,String> {
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Accept", "application/json");
             urlConnection.setRequestProperty("User-Agent", System.getProperty("http.agent"));
-            urlConnection.setRequestProperty("Authorization","Bearer eyJhbGciOiJIUzI1NiJ9.e30.jg2m4pLbAlZv1h5uPQ6fU38X23g65eXMX8q-SXuIPDg");
+            urlConnection.setRequestProperty("Authorization", screen.getString(R.string.api_token));
 
             responseCode = urlConnection.getResponseCode();
             Log.d("mydebug", ">>>RemoveFromCartTask - Code de réponse HTTP : " + responseCode);

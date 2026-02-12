@@ -58,7 +58,7 @@ public class AddToCartTask extends AsyncTask<URL,Integer,String> {
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Accept", "application/json");
             urlConnection.setRequestProperty("User-Agent", System.getProperty("http.agent"));
-            urlConnection.setRequestProperty("Authorization","Bearer eyJhbGciOiJIUzI1NiJ9.e30.jg2m4pLbAlZv1h5uPQ6fU38X23g65eXMX8q-SXuIPDg");
+            urlConnection.setRequestProperty("Authorization", ((android.app.Activity) screen).getString(R.string.api_token));
             urlConnection.setDoOutput(true);
 
             String jsonInputString = "{\"customerId\": " + customerId +

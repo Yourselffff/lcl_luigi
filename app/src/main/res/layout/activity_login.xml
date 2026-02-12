@@ -16,7 +16,7 @@
         android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="#333333"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="24dp" />
 
     <!-- Champ email -->
     <TextView
@@ -66,6 +66,25 @@
         android:padding="16dp"
         android:background="#4CAF50"
         android:textColor="#FFFFFF" />
+
+    <!-- Liste déroulante pour choisir le serveur -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Serveur API"
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/spinnerServeur"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/listeURLs"
+        android:padding="12dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:layout_marginBottom="16dp" />
 
     <!-- ProgressBar pour le chargement -->
     <ProgressBar

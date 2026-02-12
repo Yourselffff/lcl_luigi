@@ -36,7 +36,7 @@ public class CheckAvailabilityTask extends AsyncTask<URL, Integer, Boolean> {
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Accept", "application/json");
             urlConnection.setRequestProperty("User-Agent", System.getProperty("http.agent"));
-            urlConnection.setRequestProperty("Authorization","Bearer eyJhbGciOiJIUzI1NiJ9.e30.jg2m4pLbAlZv1h5uPQ6fU38X23g65eXMX8q-SXuIPDg");
+            urlConnection.setRequestProperty("Authorization", btnAjouter.getContext().getString(R.string.api_token));
             urlConnection.setConnectTimeout(5000);
             urlConnection.setReadTimeout(5000);
 

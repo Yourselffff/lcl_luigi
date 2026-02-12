@@ -7,6 +7,8 @@ public class SessionManager {
     private static final String PREF_NAME = "UserSession";
     private static final String KEY_CUSTOMER_ID = "customerId";
     private static final String KEY_IS_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_BASE_URL = "baseUrl";
+    private static final String DEFAULT_BASE_URL = "http://10.0.2.2:8180";
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -35,9 +37,22 @@ public class SessionManager {
         return sharedPreferences.getInt(KEY_CUSTOMER_ID, -1);
     }
 
-    // Déconnecter l'utilisateur
+    // Sauvegarder l'URL de base de l'API choisie
+    public void saveBaseUrl(String baseUrl) {
+        editor.putString(KEY_BASE_URL, baseUrl);
+        editor.commit();
+    }
+
+    // Récupérer l'URL de base de l'API
+    public String getBaseUrl() {
+        return sharedPreferences.getString(KEY_BASE_URL, DEFAULT_BASE_URL);
+    }
+
+    // Déconnecter l'utilisateur (on garde l'URL choisie)
     public void logout() {
+        String baseUrl = getBaseUrl();
         editor.clear();
+        editor.putString(KEY_BASE_URL, baseUrl);
         editor.commit();
     }
 }

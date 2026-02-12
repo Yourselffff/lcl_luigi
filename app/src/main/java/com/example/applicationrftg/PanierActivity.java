@@ -103,7 +103,7 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
             int rentalId = item.getRentalId();
             if (rentalId > 0) {
                 try {
-                    URL urlAAppeler = new URL("http://10.0.2.2:8180/cart/" + rentalId);
+                    URL urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/" + rentalId);
                     new RemoveFromCartTask(this, String.valueOf(rentalId)).execute(urlAAppeler);
                 } catch (MalformedURLException mue) {
                     Log.d("mydebug", ">>>Pour RemoveFromCartTask - MalformedURLException: " + mue.toString());
@@ -135,7 +135,7 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         // Appeler l'API pour valider le panier (status 2 → 3)
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/cart/checkout");
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/checkout");
             new CheckoutCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour CheckoutCartTask - MalformedURLException mue=" + mue.toString());
@@ -178,7 +178,7 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
 
         URL urlAAppeler = null;
         try {
-            urlAAppeler = new URL("http://10.0.2.2:8180/cart/" + customerId);
+            urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/" + customerId);
             new GetCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
             Log.d("mydebug", ">>>Pour GetCartTask - MalformedURLException mue=" + mue.toString());
