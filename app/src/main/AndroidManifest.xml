@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Applicationrftg"
+        android:theme="@style/Theme.applicationrftglcl"
         tools:targetApi="31">
         <activity android:name=".DetailfilmActivity" />
         <activity android:name=".PanierActivity" />

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Corps principal du clapperboard (blanc) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,44 L82,44 L82,82 L26,82 Z"/>
+
+    <!-- Barre du clap (noire) -->
+    <path
+        android:fillColor="#222222"
+        android:pathData="M26,32 L82,32 L82,44 L26,44 Z"/>
+
+    <!-- Rayures diagonales du clap (blanches sur fond noir) -->
+    <!-- Clipped to bar region using a group -->
+    <group>
+        <clip-path
+            android:pathData="M26,32 L82,32 L82,44 L26,44 Z"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M26,32 L38,32 L26,44 L14,44 Z"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M50,32 L62,32 L50,44 L38,44 Z"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M74,32 L86,32 L74,44 L62,44 Z"/>
+    </group>
+
+    <!-- Bande pellicule gauche (gris clair) -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M26,44 L34,44 L34,82 L26,82 Z"/>
+
+    <!-- Perforations gauche -->
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M27.5,49 L32.5,49 L32.5,55 L27.5,55 Z"/>
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M27.5,61 L32.5,61 L32.5,67 L27.5,67 Z"/>
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M27.5,73 L32.5,73 L32.5,79 L27.5,79 Z"/>
+
+    <!-- Bande pellicule droite (gris clair) -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M74,44 L82,44 L82,82 L74,82 Z"/>
+
+    <!-- Perforations droite -->
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M75.5,49 L80.5,49 L80.5,55 L75.5,55 Z"/>
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M75.5,61 L80.5,61 L80.5,67 L75.5,67 Z"/>
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M75.5,73 L80.5,73 L80.5,79 L75.5,79 Z"/>
+
+    <!-- Écran (fond légèrement teinté) -->
+    <path
+        android:fillColor="#F0F0F0"
+        android:pathData="M34,47 L74,47 L74,82 L34,82 Z"/>
+
+    <!-- Triangle play (rouge cinéma) -->
+    <path
+        android:fillColor="#E50914"
+        android:pathData="M46,56 L46,74 L66,65 Z"/>
+
+    <!-- Charnière/pivot en haut à gauche du clap -->
+    <path
+        android:fillColor="#888888"
+        android:pathData="M30,35 A3,3,0,1,0,30.001,35 Z"/>
+
+</vector>

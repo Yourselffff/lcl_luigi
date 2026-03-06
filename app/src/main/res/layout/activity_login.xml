@@ -84,6 +84,17 @@
         android:entries="@array/listeURLs"
         android:padding="12dp"
         android:background="@android:drawable/btn_dropdown"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Champ URL personnalisée -->
+    <EditText
+        android:id="@+id/etUrlPersonnalisee"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ou entrer une URL manuellement"
+        android:inputType="textUri"
+        android:padding="12dp"
+        android:background="@android:drawable/edit_text"
         android:layout_marginBottom="16dp" />
 
     <!-- ProgressBar pour le chargement -->

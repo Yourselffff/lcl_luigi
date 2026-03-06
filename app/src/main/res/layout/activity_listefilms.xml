@@ -72,6 +72,18 @@
                 android:visibility="gone"/>
 
         </FrameLayout>
+
+        <!-- Bouton quitter l'application -->
+        <ImageButton
+            android:id="@+id/btnQuitter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_exit"
+            android:onClick="onQuitterApp"
+            android:contentDescription="Quitter l'application"/>
+
     </LinearLayout>
 
     <!-- Barre de recherche -->
@@ -115,13 +127,31 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp"/>
 
-        <!-- ProgressBar de chargement -->
-        <ProgressBar
-            android:id="@+id/progressBar"
+        <!-- Loader : texte + roue de chargement -->
+        <LinearLayout
+            android:id="@+id/layoutChargement"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:visibility="gone"/>
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvChargement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chargement des films en cours..."
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginBottom="8dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
 
     </FrameLayout>
 

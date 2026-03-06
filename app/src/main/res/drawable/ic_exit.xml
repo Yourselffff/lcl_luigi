@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Porte (rectangle ouvert à droite) -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M10,3 L4,3 L4,21 L10,21"/>
+
+    <!-- Flèche vers la droite (sortie) -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M15,8 L20,12 L15,16"/>
+
+    <!-- Trait horizontal de la flèche -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M9,12 L20,12"/>
+
+</vector>
