@@ -10,13 +10,33 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class AddCommentTask extends AsyncTask<URL,Integer,String> {
+/**
+ * Tâche asynchrone ajoutant un commentaire sur un film via POST /films/commentaire/add.
+ * Échappe les caractères spéciaux du texte avant sérialisation JSON manuelle.
+ * Notifie DetailfilmActivity via le callback commentaireAjouteAvecSucces.
+ */
+public class AddCommentTask extends AsyncTask<URL, Integer, String> {
 
+    /** Référence volatile à DetailfilmActivity pour le callback de résultat. */
     private volatile DetailfilmActivity screen;
+
+    /** Identifiant du film concerné par le commentaire. */
     private String filmId;
+
+    /** Identifiant du client connecté qui poste le commentaire. */
     private String customerId;
+
+    /** Texte du commentaire saisi par l'utilisateur. */
     private String commentText;
 
+    /**
+     * Constructeur de la tâche.
+     *
+     * @param s           DetailfilmActivity qui recevra le résultat.
+     * @param filmId      identifiant du film concerné.
+     * @param customerId  identifiant du client connecté.
+     * @param commentText texte du commentaire à publier.
+     */
     public AddCommentTask(DetailfilmActivity s, String filmId, String customerId, String commentText) {
         this.screen = s;
         this.filmId = filmId;
@@ -24,31 +44,47 @@ public class AddCommentTask extends AsyncTask<URL,Integer,String> {
         this.commentText = commentText;
     }
 
+    /** Pré-traitement avant l'exécution (non utilisé ici). */
     @Override
     protected void onPreExecute() {
-        // Prétraitement
+        // Réservé pour d'éventuelles initialisations avant l'appel réseau
     }
 
+    /**
+     * Exécuté sur le thread de fond — effectue le POST vers /films/commentaire/add.
+     *
+     * @param urls URL cible (index 0 = /films/commentaire/add).
+     * @return réponse de l'API ou chaîne vide en cas d'erreur.
+     */
     @Override
     protected String doInBackground(URL... urls) {
-        String sResultatAppel = null;
         URL urlAAppeler = urls[0];
-        sResultatAppel = appelerServiceRestHttp(urlAAppeler);
-        return sResultatAppel;
+        return appelerServiceRestHttp(urlAAppeler);
     }
 
+    /**
+     * Exécuté sur le thread principal — notifie DetailfilmActivity de l'ajout.
+     *
+     * @param resultat réponse de l'API.
+     */
     @Override
     protected void onPostExecute(String resultat) {
-        System.out.println(">>>onPostExecute AddCommentTask / resultat="+resultat);
+        System.out.println(">>>onPostExecute AddCommentTask / resultat=" + resultat);
         this.screen.commentaireAjouteAvecSucces(resultat);
     }
 
+    /**
+     * Effectue l'appel HTTP POST avec le commentaire dans le corps JSON.
+     * Échappe les caractères spéciaux (guillemets, antislashes, retours à la ligne)
+     * pour garantir un JSON valide sans librairie de sérialisation.
+     *
+     * @param urlAAppeler URL du service REST à appeler.
+     * @return corps de la réponse HTTP, ou chaîne vide en cas d'erreur.
+     */
     private String appelerServiceRestHttp(URL urlAAppeler) {
         HttpURLConnection urlConnection = null;
-        int responseCode = -1;
         String sResultatAppel = "";
         try {
-            // Appel POST avec les données du commentaire
             urlConnection = (HttpURLConnection) urlAAppeler.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -57,12 +93,12 @@ public class AddCommentTask extends AsyncTask<URL,Integer,String> {
             urlConnection.setRequestProperty("Authorization", screen.getString(R.string.api_token));
             urlConnection.setDoOutput(true);
 
-        
+            // Échappement manuel des caractères spéciaux pour JSON valide
             String escapedCommentText = commentText
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r");
+                    .replace("\\", "\\\\")   // antislash
+                    .replace("\"", "\\\"")   // guillemet double
+                    .replace("\n", "\\n")    // retour à la ligne
+                    .replace("\r", "\\r");   // retour chariot
 
             String jsonInputString = "{\"filmId\": " + filmId +
                     ", \"customerId\": " + customerId +
@@ -70,27 +106,27 @@ public class AddCommentTask extends AsyncTask<URL,Integer,String> {
 
             Log.d("mydebug", ">>>AddCommentTask - JSON envoyé : " + jsonInputString);
 
-           
+            // Envoi du corps JSON
             try (OutputStream os = urlConnection.getOutputStream()) {
                 byte[] input = jsonInputString.getBytes("utf-8");
                 os.write(input, 0, input.length);
             }
 
-            responseCode = urlConnection.getResponseCode();
+            int responseCode = urlConnection.getResponseCode();
             Log.d("mydebug", ">>>AddCommentTask - Code de réponse HTTP : " + responseCode);
 
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-
-            int codeCaractere = -1;
+            int codeCaractere;
             while ((codeCaractere = in.read()) != -1) {
                 sResultatAppel = sResultatAppel + (char) codeCaractere;
             }
             in.close();
             Log.d("mydebug", ">>>AddCommentTask - Résultat obtenu : " + sResultatAppel);
+
         } catch (IOException ioe) {
-            Log.d("mydebug", ">>>AddCommentTask - IOException ioe =" + ioe.toString());
+            Log.d("mydebug", ">>>AddCommentTask - IOException: " + ioe.toString());
         } catch (Exception e) {
-            Log.d("mydebug",">>>AddCommentTask - Exception="+e.toString());
+            Log.d("mydebug", ">>>AddCommentTask - Exception: " + e.toString());
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

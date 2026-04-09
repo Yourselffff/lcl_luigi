@@ -19,6 +19,12 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.util.Map;
 
+/**
+ * Activity d'authentification de l'utilisateur.
+ * Collecte l'email et le mot de passe, hashe le mot de passe en MD5,
+ * puis appelle l'API REST (/customers/verify) via LoginTask.
+ * En cas de succès, persiste la session et redirige vers ListefilmsActivity.
+ */
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
@@ -28,26 +34,31 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvErreurLogin;
     private Spinner spinnerServeur;
     private EditText etUrlPersonnalisee;
+
+    /** Gestionnaire de session pour persister le customerId et l'URL serveur. */
     private SessionManager sessionManager;
 
+    /**
+     * Initialise l'Activity, vérifie si une session active existe et configure les vues.
+     * Si l'utilisateur est déjà connecté, redirige directement vers la liste des films.
+     *
+     * @param savedInstanceState état sauvegardé de l'instance.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialiser le SessionManager
         sessionManager = new SessionManager(this);
 
-        // Vérifier si l'utilisateur est déjà connecté
+        // Redirection automatique si session déjà active
         if (sessionManager.isLoggedIn()) {
-            // Rediriger directement vers la liste des films
-            Intent intent = new Intent(LoginActivity.this, ListefilmsActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(LoginActivity.this, ListefilmsActivity.class));
             finish();
             return;
         }
 
-        // Initialiser les vues
+        // Liaison des vues avec les éléments du layout
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
@@ -56,7 +67,6 @@ public class LoginActivity extends AppCompatActivity {
         spinnerServeur = findViewById(R.id.spinnerServeur);
         etUrlPersonnalisee = findViewById(R.id.etUrlPersonnalisee);
 
-        // Listener sur le bouton de connexion
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -65,43 +75,42 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Orchestre le processus de connexion :
+     * validation des champs, hashage MD5 du mot de passe,
+     * détermination de l'URL serveur, puis lancement de LoginTask.
+     */
     private void connecter() {
-        // Récupérer les valeurs des champs
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // Validation des champs
+        // Validation basique des champs avant appel réseau
         if (email.isEmpty()) {
             tvErreurLogin.setText("Veuillez entrer votre email");
             tvErreurLogin.setVisibility(View.VISIBLE);
             return;
         }
-
         if (password.isEmpty()) {
             tvErreurLogin.setText("Veuillez entrer votre mot de passe");
             tvErreurLogin.setVisibility(View.VISIBLE);
             return;
         }
 
-        // Masquer le message d'erreur et afficher le loader
+        // Masquer le message d'erreur et afficher l'indicateur de chargement
         tvErreurLogin.setVisibility(View.GONE);
         progressBarLogin.setVisibility(View.VISIBLE);
         btnLogin.setEnabled(false);
 
-        // Encrypter le mot de passe en MD5
+        // Hashage MD5 du mot de passe avant envoi à l'API
         String passwordEncrypte = encrypterChaineMD5(password);
+        Log.d("mydebug", ">>>Mot de passe hashé en MD5: " + passwordEncrypte);
 
-        // Log pour voir le mot de passe encrypté
-        Log.d("mydebug", ">>>Mot de passe encrypté en MD5: " + passwordEncrypte);
-
-        // Créer l'objet LoginRequest avec le mot de passe encrypté
+        // Sérialisation de la requête en JSON
         LoginRequest loginRequest = new LoginRequest(email, passwordEncrypte);
-
-        // Convertir en JSON
         Gson gson = new Gson();
         String jsonBody = gson.toJson(loginRequest);
 
-        // Déterminer l'URL de base : priorité au champ personnalisé
+        // Priorité au champ URL personnalisée, sinon valeur du Spinner
         String urlPersonnalisee = etUrlPersonnalisee.getText().toString().trim();
         String baseUrl;
         if (!urlPersonnalisee.isEmpty()) {
@@ -113,13 +122,13 @@ public class LoginActivity extends AppCompatActivity {
         }
         sessionManager.saveBaseUrl(baseUrl);
 
-        // Appel REST
+        // Lancement de la tâche asynchrone d'authentification
         URL urlAAppeler = null;
         try {
             urlAAppeler = new URL(baseUrl + "/customers/verify");
             new LoginTask(this, jsonBody).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour LoginTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>LoginTask - MalformedURLException: " + mue.toString());
             progressBarLogin.setVisibility(View.GONE);
             btnLogin.setEnabled(true);
             tvErreurLogin.setText("Erreur de connexion");
@@ -129,73 +138,77 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Callback appelé par LoginTask après réception de la réponse API.
+     * Parse la réponse JSON, vérifie le customerId et redirige si connexion réussie.
+     *
+     * @param resultatAppelRest JSON retourné par l'API (contient "customerId").
+     */
     public void mettreAJourActivityApresAppelRest(String resultatAppelRest) {
-        // Masquer le loader
         progressBarLogin.setVisibility(View.GONE);
         btnLogin.setEnabled(true);
 
-        Log.d("mydebug", ">>>Pour LoginActivity - resultat=" + resultatAppelRest);
+        Log.d("mydebug", ">>>LoginActivity - resultat=" + resultatAppelRest);
 
-        // Parser la réponse JSON
         try {
             Gson gson = new Gson();
             Map<String, Object> response = gson.fromJson(resultatAppelRest, Map.class);
 
-            // Récupérer le customerId (retourné comme Double par Gson)
+            // Gson désérialise les nombres en Double par défaut
             Double customerIdDouble = (Double) response.get("customerId");
 
             if (customerIdDouble != null) {
                 int customerId = customerIdDouble.intValue();
 
                 if (customerId > 0) {
-                    // Connexion réussie (customerId positif)
+                    // Connexion réussie : persistance de la session et redirection
                     Log.d("mydebug", ">>>Connexion réussie - customerId=" + customerId);
-
-                    // Sauvegarder la session
                     sessionManager.createLoginSession(customerId);
-
-                    // Rediriger vers la liste des films
-                    Intent intent = new Intent(LoginActivity.this, ListefilmsActivity.class);
-                    startActivity(intent);
-                    finish(); // Fermer l'activité de connexion
+                    startActivity(new Intent(LoginActivity.this, ListefilmsActivity.class));
+                    finish();
                 } else {
-                    // Échec de la connexion (customerId = -1)
+                    // customerId = -1 : identifiants incorrects
                     Log.d("mydebug", ">>>Échec de la connexion - customerId=" + customerId);
                     tvErreurLogin.setText("Email ou mot de passe incorrect");
                     tvErreurLogin.setVisibility(View.VISIBLE);
                 }
             } else {
-                // Réponse invalide
+                // Réponse inattendue de l'API
                 Log.e("mydebug", ">>>customerId est null dans la réponse");
                 tvErreurLogin.setText("Erreur de connexion");
                 tvErreurLogin.setVisibility(View.VISIBLE);
             }
         } catch (Exception e) {
-            Log.e("mydebug", ">>>Erreur lors du parsing de la réponse: " + e.toString());
+            Log.e("mydebug", ">>>Erreur parsing réponse: " + e.toString());
             tvErreurLogin.setText("Erreur de connexion");
             tvErreurLogin.setVisibility(View.VISIBLE);
         }
     }
 
-    // ENCRYPTAGE EN MD5
+    /**
+     * Hashe une chaîne de caractères en MD5 pour sécuriser le mot de passe avant envoi.
+     * Chaque octet est converti en sa représentation hexadécimale sur 2 caractères.
+     *
+     * @param chaine chaîne à hasher (mot de passe en clair).
+     * @return représentation hexadécimale du hash MD5.
+     */
     private String encrypterChaineMD5(String chaine) {
         byte[] chaineBytes = chaine.getBytes();
         byte[] hash = null;
         try {
             hash = MessageDigest.getInstance("MD5").digest(chaineBytes);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         StringBuffer hashString = new StringBuffer();
-        for (int i=0; i<hash.length; ++i ) {
+        for (int i = 0; i < hash.length; ++i) {
             String hex = Integer.toHexString(hash[i]);
             if (hex.length() == 1) {
+                // Compléter à 2 caractères si l'octet est < 0x10
                 hashString.append('0');
-                hashString.append(hex.charAt(hex.length()-1));
-            }
-            else {
-                hashString.append(hex.substring(hex.length()-2));
+                hashString.append(hex.charAt(hex.length() - 1));
+            } else {
+                hashString.append(hex.substring(hex.length() - 2));
             }
         }
         return hashString.toString();

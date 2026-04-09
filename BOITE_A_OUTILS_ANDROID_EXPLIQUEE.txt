@@ -1,0 +1,601 @@
+BOITE A OUTILS ANDROID EXPLIQUEE
+Version detaillee pour revisions BTS
+
+But :
+Cette fiche explique les composants Android les plus utiles.
+Pour chaque composant tu trouves :
+- a quoi il sert
+- les attributs XML importants
+- ce qu'on fait en Java
+- un exemple
+- les erreurs classiques
+
+==================================================
+1. COMMENT MARCHE UN ECRAN ANDROID
+==================================================
+
+Un ecran Android a souvent 2 parties :
+- le XML : l'apparence
+- le Java : le comportement
+
+Le XML sert a afficher :
+- des boutons
+- des textes
+- des champs de saisie
+- des listes
+
+Le Java sert a :
+- recuperer les valeurs
+- reagir aux clics
+- faire un calcul
+- changer d'ecran
+
+Exemple de base :
+
+public class MainActivity extends AppCompatActivity {
+
+    private Button btnValider;
+    private TextView txtResultat;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        btnValider = findViewById(R.id.btnValider);
+        txtResultat = findViewById(R.id.txtResultat);
+
+        btnValider.setOnClickListener(v -> {
+            txtResultat.setText("Bonjour");
+        });
+    }
+}
+
+A retenir :
+- `setContentView(...)` charge le XML
+- `findViewById(...)` recupere un composant XML
+- `setOnClickListener(...)` gere le clic
+
+==================================================
+2. LES ATTRIBUTS XML LES PLUS IMPORTANTS
+==================================================
+
+`android:id`
+- identifie le composant
+- sert a le retrouver en Java
+
+`android:layout_width`
+- largeur du composant
+- `wrap_content` = juste la place necessaire
+- `match_parent` = prend toute la place disponible
+
+`android:layout_height`
+- hauteur du composant
+
+`android:text`
+- texte affiche
+
+`android:hint`
+- texte d'aide dans un champ de saisie
+
+==================================================
+3. BUTTON
+==================================================
+
+A quoi sert un Button :
+- lancer une action
+- valider un formulaire
+- ouvrir un autre ecran
+
+XML :
+
+<Button
+    android:id="@+id/btnValider"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Valider" />
+
+Java :
+
+Button btnValider = findViewById(R.id.btnValider);
+
+btnValider.setOnClickListener(v -> {
+    Toast.makeText(this, "Bouton clique", Toast.LENGTH_SHORT).show();
+});
+
+Explication :
+- on recupere le bouton avec `findViewById`
+- on met le code du clic dans `setOnClickListener`
+
+Erreurs classiques :
+- mauvais id
+- `findViewById` avant `setContentView`
+
+==================================================
+4. TEXTVIEW
+==================================================
+
+A quoi sert un TextView :
+- afficher un texte
+- afficher un resultat
+- afficher un titre
+
+XML :
+
+<TextView
+    android:id="@+id/txtMessage"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Bonjour"
+    android:textSize="20sp" />
+
+Java :
+
+TextView txtMessage = findViewById(R.id.txtMessage);
+txtMessage.setText("Nouveau texte");
+
+Explication :
+- `setText(...)` change le contenu du texte
+
+==================================================
+5. EDITTEXT
+==================================================
+
+A quoi sert un EditText :
+- laisser l'utilisateur taper une valeur
+
+Exemples :
+- nom
+- age
+- email
+- mot de passe
+
+XML :
+
+<EditText
+    android:id="@+id/edtNom"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Entrez votre nom" />
+
+Java :
+
+EditText edtNom = findViewById(R.id.edtNom);
+String nom = edtNom.getText().toString();
+
+if (nom.isEmpty()) {
+    edtNom.setError("Champ obligatoire");
+}
+
+Explication :
+- `getText()` recupere le contenu
+- `toString()` transforme en texte Java
+- `setError(...)` affiche une erreur
+
+Erreur classique :
+- oublier `toString()`
+
+==================================================
+6. CHECKBOX
+==================================================
+
+A quoi sert une CheckBox :
+- repondre par oui/non
+- cocher plusieurs choix possibles
+
+XML :
+
+<CheckBox
+    android:id="@+id/chkAccepter"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="J'accepte" />
+
+Java :
+
+CheckBox chkAccepter = findViewById(R.id.chkAccepter);
+
+if (chkAccepter.isChecked()) {
+    Toast.makeText(this, "Case cochee", Toast.LENGTH_SHORT).show();
+}
+
+A retenir :
+- `isChecked()` renvoie `true` ou `false`
+
+==================================================
+7. RADIOGROUP ET RADIOBUTTON
+==================================================
+
+A quoi ca sert :
+- faire un seul choix parmi plusieurs
+
+Exemple :
+- Homme / Femme
+- Carte / Especes
+- Oui / Non
+
+XML :
+
+<RadioGroup
+    android:id="@+id/radioGroup"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <RadioButton
+        android:id="@+id/rbOui"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Oui" />
+
+    <RadioButton
+        android:id="@+id/rbNon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Non" />
+
+</RadioGroup>
+
+Java :
+
+RadioGroup radioGroup = findViewById(R.id.radioGroup);
+int idChoisi = radioGroup.getCheckedRadioButtonId();
+
+if (idChoisi != -1) {
+    RadioButton rbChoisi = findViewById(idChoisi);
+    String valeur = rbChoisi.getText().toString();
+}
+
+Attention :
+- `-1` veut dire aucun choix
+
+==================================================
+8. IMAGEVIEW
+==================================================
+
+A quoi sert un ImageView :
+- afficher une image
+- afficher un logo
+- afficher une photo
+
+XML :
+
+<ImageView
+    android:id="@+id/imgLogo"
+    android:layout_width="120dp"
+    android:layout_height="120dp"
+    android:src="@drawable/ic_launcher_foreground" />
+
+Java :
+
+ImageView imgLogo = findViewById(R.id.imgLogo);
+imgLogo.setImageResource(R.drawable.ic_launcher_foreground);
+
+==================================================
+9. TOAST
+==================================================
+
+A quoi sert un Toast :
+- afficher un message court temporaire
+
+Code :
+
+Toast.makeText(this, "Enregistrement reussi", Toast.LENGTH_SHORT).show();
+
+Explication :
+- `this` = contexte de l'activity
+- texte = message
+- `show()` affiche
+
+==================================================
+10. INTENT
+==================================================
+
+A quoi sert un Intent :
+- changer d'ecran
+- envoyer des donnees
+
+Code simple :
+
+Intent intent = new Intent(MainActivity.this, SecondeActivity.class);
+startActivity(intent);
+
+Avec donnees :
+
+Intent intent = new Intent(MainActivity.this, SecondeActivity.class);
+intent.putExtra("nom", "Alice");
+intent.putExtra("age", 20);
+startActivity(intent);
+
+Recuperation :
+
+String nom = getIntent().getStringExtra("nom");
+int age = getIntent().getIntExtra("age", 0);
+
+Erreur classique :
+- cle differente entre envoi et lecture
+
+==================================================
+11. LISTVIEW
+==================================================
+
+A quoi sert un ListView :
+- afficher une liste simple verticale
+
+XML :
+
+<ListView
+    android:id="@+id/liste"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+
+Java :
+
+ListView liste = findViewById(R.id.liste);
+
+ArrayList<String> donnees = new ArrayList<>();
+donnees.add("Paris");
+donnees.add("Lyon");
+donnees.add("Marseille");
+
+ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        this,
+        android.R.layout.simple_list_item_1,
+        donnees
+);
+
+liste.setAdapter(adapter);
+
+liste.setOnItemClickListener((parent, view, position, id) -> {
+    String valeur = donnees.get(position);
+    Toast.makeText(this, valeur, Toast.LENGTH_SHORT).show();
+});
+
+Explication :
+- `ArrayAdapter` relie les donnees a la liste
+- `position` = numero de ligne cliquee
+
+==================================================
+12. RECYCLERVIEW
+==================================================
+
+A quoi sert un RecyclerView :
+- afficher une liste plus moderne et plus souple qu'un ListView
+
+Il faut en general :
+- un RecyclerView
+- un item XML
+- un adapter
+- un LayoutManager
+
+Dans l'activity :
+
+RecyclerView recyclerView = findViewById(R.id.recyclerView);
+recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+ArrayList<String> liste = new ArrayList<>();
+liste.add("Java");
+liste.add("XML");
+liste.add("SQLite");
+
+MonAdapter adapter = new MonAdapter(liste);
+recyclerView.setAdapter(adapter);
+
+A retenir :
+- `LayoutManager` gere l'organisation des lignes
+- l'adapter remplit les lignes
+
+==================================================
+13. SPINNER
+==================================================
+
+A quoi sert un Spinner :
+- faire une liste deroulante
+
+XML :
+
+<Spinner
+    android:id="@+id/spPays"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
+
+Java :
+
+Spinner spPays = findViewById(R.id.spPays);
+
+String[] pays = {"France", "Espagne", "Italie"};
+
+ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        this,
+        android.R.layout.simple_spinner_item,
+        pays
+);
+
+adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+spPays.setAdapter(adapter);
+
+String paysChoisi = spPays.getSelectedItem().toString();
+
+==================================================
+14. LINEARLAYOUT
+==================================================
+
+A quoi sert un LinearLayout :
+- aligner les composants a la suite
+
+Vertical :
+- du haut vers le bas
+
+Horizontal :
+- de gauche a droite
+
+Exemple :
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nom" />
+
+    <EditText
+        android:id="@+id/edtNom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
+
+==================================================
+15. CONSTRAINTLAYOUT
+==================================================
+
+A quoi sert un ConstraintLayout :
+- placer les composants avec des contraintes
+
+Idee :
+- on attache un composant au parent
+- ou a un autre composant
+
+Exemple :
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/txtTitre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Titre"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+==================================================
+16. SQLITE
+==================================================
+
+A quoi sert SQLite :
+- stocker des donnees dans le telephone
+
+Exemples :
+- utilisateurs
+- produits
+- notes
+
+Creation de la base :
+
+public class MaBaseSQLite extends SQLiteOpenHelper {
+
+    private static final String NOM_BDD = "ecole.db";
+    private static final int VERSION = 1;
+
+    public MaBaseSQLite(Context context) {
+        super(context, NOM_BDD, null, VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE etudiant (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "nom TEXT," +
+                "prenom TEXT)");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS etudiant");
+        onCreate(db);
+    }
+}
+
+Insertion :
+
+ContentValues values = new ContentValues();
+values.put("nom", "Dupont");
+values.put("prenom", "Alice");
+db.insert("etudiant", null, values);
+
+Lecture :
+
+Cursor cursor = db.rawQuery("SELECT * FROM etudiant", null);
+
+while (cursor.moveToNext()) {
+    String nom = cursor.getString(1);
+}
+
+cursor.close();
+
+==================================================
+17. MANIFEST
+==================================================
+
+Le `AndroidManifest.xml` sert a declarer :
+- les activites
+- les permissions
+- l'ecran principal
+
+Exemple permission :
+
+<uses-permission android:name="android.permission.INTERNET" />
+
+Exemple activity :
+
+<activity android:name=".SecondeActivity" />
+
+==================================================
+18. METHODE SIMPLE A L'EXAMEN
+==================================================
+
+Quand tu as un exercice :
+1. Faire le XML
+2. Mettre les `id`
+3. Faire les `findViewById`
+4. Recuperer les valeurs
+5. Faire le traitement
+6. Afficher le resultat
+
+Schema simple :
+- saisir
+- recuperer
+- tester
+- agir
+- afficher
+
+==================================================
+19. PIEGES CLASSIQUES
+==================================================
+
+- mauvais id entre XML et Java
+- oubli de `setContentView(...)`
+- oubli de `toString()`
+- mauvaise cle dans `putExtra(...)`
+- activity non declaree dans le manifest
+- oublier de fermer un `Cursor`
+
+==================================================
+20. CONSEIL FINAL
+==================================================
+
+Pour le BTS, retiens surtout :
+- Button = action
+- TextView = affichage
+- EditText = saisie
+- CheckBox = oui/non
+- RadioButton = un seul choix
+- ListView/RecyclerView = liste
+- Intent = changer d'ecran
+- SQLite = stocker des donnees
+
+Si tu veux reussir vite :
+- fais simple
+- fais propre
+- fais fonctionner l'essentiel d'abord

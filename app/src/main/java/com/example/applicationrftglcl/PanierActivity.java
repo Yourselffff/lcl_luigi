@@ -17,62 +17,88 @@ import java.net.URL;
 import java.util.ArrayList;
 
 /**
- * Activity pour afficher le panier
- * Principe du cours : utilisation de ListView avec Adapter
+ * Activity affichant le contenu du panier de l'utilisateur.
+ * Charge les articles depuis l'API (GET /cart/{customerId}), les synchronise
+ * avec le Singleton Panier, et permet de supprimer des articles, vider
+ * ou valider le panier (POST /cart/checkout).
+ * Implémente PanierAdapter.PanierChangeListener pour réagir aux modifications
+ * déclenchées depuis l'Adapter.
  */
 public class PanierActivity extends AppCompatActivity implements PanierAdapter.PanierChangeListener {
 
+    /** ListView affichant les articles du panier. */
     private ListView lvPanier;
+
+    /** TextView affichant le nombre d'articles ("X film(s)"). */
     private TextView tvNombreItems;
+
+    /** TextView affiché quand le panier est vide. */
     private TextView tvPanierVide;
+
+    /** Adapter personnalisé gérant l'affichage de chaque ligne du panier. */
     private PanierAdapter adapter;
+
+    /** Gestionnaire de session pour récupérer le customerId et l'URL serveur. */
     private SessionManager sessionManager;
+
+    /** Liste brute des CartItem retournés par l'API. */
     private ArrayList<CartItem> cartItems;
 
+    /**
+     * Initialise l'Activity, crée l'Adapter et charge le panier depuis l'API.
+     *
+     * @param savedInstanceState état sauvegardé de l'instance.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_panier);
 
-        // Initialiser le SessionManager
         sessionManager = new SessionManager(this);
         cartItems = new ArrayList<>();
 
-        // Initialiser les vues
+        // Liaison des vues avec les éléments du layout
         lvPanier = findViewById(R.id.lvPanier);
         tvNombreItems = findViewById(R.id.tvNombreItems);
         tvPanierVide = findViewById(R.id.tvPanierVide);
 
-        // Créer l'adapter et l'associer à la ListView
+        // Création de l'Adapter avec les items du Singleton Panier
         adapter = new PanierAdapter(this, Panier.getInstance().getItems(), this);
         lvPanier.setAdapter(adapter);
 
-        // Charger le panier depuis l'API
+        // Chargement initial du panier depuis le serveur
         chargerPanierDepuisAPI();
     }
 
+    /**
+     * Rafraîchit l'affichage lors du retour sur cet écran (ex. : retour depuis DetailfilmActivity).
+     */
     @Override
     protected void onResume() {
         super.onResume();
-        // Rafraîchir l'affichage quand on revient sur l'écran
         mettreAJourAffichage();
     }
 
-    // Méthode appelée quand le panier change (principe du cours : callback)
+    /**
+     * Implémentation de PanierAdapter.PanierChangeListener.
+     * Appelé par l'Adapter lorsqu'un article est supprimé.
+     */
     @Override
     public void onPanierChanged() {
         mettreAJourAffichage();
     }
 
-    // Mettre à jour l'affichage du panier
+    /**
+     * Met à jour l'affichage du panier : compteur, visibilité de la liste
+     * et du message "panier vide", et notification de l'Adapter.
+     */
     private void mettreAJourAffichage() {
         Panier panier = Panier.getInstance();
         int nombreItems = panier.getNombreItems();
 
-        // Afficher le nombre d'items
         tvNombreItems.setText(nombreItems + " film(s)");
 
-        // Afficher ou masquer le message "panier vide"
+        // Affiche soit la liste soit le message "panier vide"
         if (nombreItems == 0) {
             lvPanier.setVisibility(View.GONE);
             tvPanierVide.setVisibility(View.VISIBLE);
@@ -81,11 +107,17 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
             tvPanierVide.setVisibility(View.GONE);
         }
 
-        // Notifier l'adapter que les données ont changé
+        // Notifie l'Adapter pour redessiner les lignes
         adapter.notifyDataSetChanged();
     }
 
-    // Bouton "Vider le panier"
+    /**
+     * Callback du bouton "Vider le panier" (défini via android:onClick dans le layout).
+     * Supprime chaque article via DELETE /cart/{rentalId} si le rentalId est connu,
+     * sinon supprime localement.
+     *
+     * @param view vue ayant déclenché l'événement.
+     */
     public void onViderPanierClicked(View view) {
         ArrayList<ItemPanier> items = Panier.getInstance().getItems();
 
@@ -94,21 +126,21 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
             return;
         }
 
-        // Créer une copie de la liste pour éviter les problèmes de modification pendant l'itération
+        // Copie pour éviter une ConcurrentModificationException pendant l'itération
         ArrayList<ItemPanier> itemsCopy = new ArrayList<>(items);
 
-        // Supprimer chaque item via l'API
         for (ItemPanier item : itemsCopy) {
             int rentalId = item.getRentalId();
             if (rentalId > 0) {
+                // Suppression via l'API si le rentalId est disponible
                 try {
                     URL urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/" + rentalId);
                     new RemoveFromCartTask(this, String.valueOf(rentalId)).execute(urlAAppeler);
                 } catch (MalformedURLException mue) {
-                    Log.d("mydebug", ">>>Pour RemoveFromCartTask - MalformedURLException: " + mue.toString());
+                    Log.d("mydebug", ">>>RemoveFromCartTask - MalformedURLException: " + mue.toString());
                 }
             } else {
-                // Si pas de rentalId, supprimer localement
+                // Suppression locale uniquement si pas de rentalId
                 Panier.getInstance().supprimerFilm(item.getFilm().getFilm_id());
             }
         }
@@ -117,7 +149,12 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         Log.d("PanierActivity", "Vidage du panier - " + itemsCopy.size() + " item(s) à supprimer");
     }
 
-    // Bouton "Valider la réservation"
+    /**
+     * Callback du bouton "Valider la réservation" (défini via android:onClick dans le layout).
+     * Appelle POST /cart/checkout pour passer les locations du statut 2 (panier) à 3 (réservé).
+     *
+     * @param view vue ayant déclenché l'événement.
+     */
     public void onValiderClicked(View view) {
         if (Panier.getInstance().getNombreItems() == 0) {
             Toast.makeText(this, "Votre panier est vide", Toast.LENGTH_SHORT).show();
@@ -125,34 +162,36 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         }
 
         int customerId = sessionManager.getCustomerId();
-
         if (customerId == -1) {
             Toast.makeText(this, "Erreur: Utilisateur non connecté", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Appeler l'API pour valider le panier (status 2 → 3)
         URL urlAAppeler = null;
         try {
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/checkout");
             new CheckoutCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour CheckoutCartTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>CheckoutCartTask - MalformedURLException: " + mue.toString());
             Toast.makeText(this, "Erreur lors de la validation", Toast.LENGTH_SHORT).show();
         } finally {
             urlAAppeler = null;
         }
     }
 
-    // Callback appelé après la validation du panier
+    /**
+     * Callback appelé par CheckoutCartTask après validation du panier.
+     * Vide le panier local et rafraîchit l'affichage en cas de succès.
+     *
+     * @param resultat réponse de l'API ou "ERROR".
+     */
     public void panierValideAvecSucces(String resultat) {
         Log.d("mydebug", ">>>Panier validé: " + resultat);
 
         if (resultat != null && !resultat.equals("ERROR")) {
             Toast.makeText(this, "Réservation validée !", Toast.LENGTH_LONG).show();
             Log.d("PanierActivity", "Panier validé avec succès");
-
-            // Vider le panier local après validation
+            // Vide le panier local après confirmation du serveur
             Panier.getInstance().viderPanier();
             mettreAJourAffichage();
         } else {
@@ -160,13 +199,21 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         }
     }
 
-    // Bouton "Continuer les achats"
+    /**
+     * Callback du bouton "Continuer les achats" (défini via android:onClick dans le layout).
+     * Ferme l'Activity et retourne à ListefilmsActivity.
+     *
+     * @param view vue ayant déclenché l'événement.
+     */
     public void onContinuerAchatsClicked(View view) {
         Log.d("PanierActivity", "Retour à la liste des films");
-        finish(); // Retour à l'activité précédente
+        finish();
     }
 
-    // Charger le panier depuis l'API
+    /**
+     * Lance GetCartTask pour récupérer le panier depuis l'API.
+     * Vérifie que le customerId est valide avant l'appel.
+     */
     private void chargerPanierDepuisAPI() {
         int customerId = sessionManager.getCustomerId();
 
@@ -180,36 +227,38 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/" + customerId);
             new GetCartTask(this, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour GetCartTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>GetCartTask - MalformedURLException: " + mue.toString());
         } finally {
             urlAAppeler = null;
         }
     }
 
-    // Callback appelé après la récupération du panier depuis l'API
+    /**
+     * Callback appelé par GetCartTask après récupération du panier.
+     * Parse le JSON, synchronise le panier local et rafraîchit l'affichage.
+     *
+     * @param resultatAppelRest JSON de la liste des CartItem.
+     */
     public void mettreAJourPanierApresAppelRest(String resultatAppelRest) {
         Log.d("mydebug", ">>>Panier reçu: " + resultatAppelRest);
 
         if (resultatAppelRest == null || resultatAppelRest.trim().isEmpty() || resultatAppelRest.equals("[]")) {
-            // Aucun item dans le panier
+            // Panier vide côté serveur : vider aussi localement
             Panier.getInstance().viderPanier();
             mettreAJourAffichage();
             return;
         }
 
         try {
-            // Parser le JSON en liste de CartItem
             Gson gson = new Gson();
             Type cartListType = new TypeToken<ArrayList<CartItem>>(){}.getType();
             cartItems = gson.fromJson(resultatAppelRest, cartListType);
 
             if (cartItems != null && !cartItems.isEmpty()) {
-                // Synchroniser avec le panier local pour l'affichage
                 synchroniserPanierLocal();
             } else {
                 Panier.getInstance().viderPanier();
             }
-
             mettreAJourAffichage();
         } catch (Exception e) {
             Log.e("mydebug", ">>>Erreur parsing panier: " + e.toString());
@@ -218,25 +267,26 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         }
     }
 
-    // Synchroniser le panier local avec les données de l'API
+    /**
+     * Synchronise le Singleton Panier avec les données reçues de l'API.
+     * Recrée les ItemPanier depuis les CartItem et associe chaque rentalId
+     * pour permettre la suppression ultérieure via l'API.
+     */
     private void synchroniserPanierLocal() {
-        // Vider le panier local
         Panier.getInstance().viderPanier();
 
-        // Ajouter les films du panier API au panier local pour l'affichage
         for (CartItem item : cartItems) {
-            // Créer un objet Film à partir du CartItem
             Film film = item.getFilm();
             if (film == null) {
+                // Crée un Film minimal si l'objet imbriqué est absent de la réponse
                 film = new Film();
                 film.setFilm_id(item.getFilmId());
                 film.setTitle(item.getFilmTitle());
             }
 
-            // Ajouter au panier local
             Panier.getInstance().ajouterFilm(film);
 
-            // Mettre à jour le rentalId dans l'ItemPanier correspondant
+            // Associe le rentalId à l'ItemPanier pour la suppression via DELETE /cart/{rentalId}
             ItemPanier itemPanier = Panier.getInstance().trouverItem(film.getFilm_id());
             if (itemPanier != null) {
                 itemPanier.setRentalId(item.getRentalId());
@@ -244,13 +294,16 @@ public class PanierActivity extends AppCompatActivity implements PanierAdapter.P
         }
     }
 
-    // Callback appelé après le retrait d'un item du panier
+    /**
+     * Callback appelé par RemoveFromCartTask après suppression d'un article.
+     * Recharge le panier depuis l'API pour synchroniser l'affichage.
+     *
+     * @param resultat réponse de l'API.
+     */
     public void itemRetireDuPanierAvecSucces(String resultat) {
         Log.d("mydebug", ">>>Item retiré du panier: " + resultat);
-
         Toast.makeText(this, "Film retiré du panier", Toast.LENGTH_SHORT).show();
-
-        // Recharger le panier depuis l'API
+        // Rechargement pour refléter l'état réel du serveur
         chargerPanierDepuisAPI();
     }
 }

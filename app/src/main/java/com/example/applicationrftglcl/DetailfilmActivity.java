@@ -26,97 +26,131 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Activity affichant le détail d'un film sélectionné depuis ListefilmsActivity.
+ * Charge les informations du film (titre, description, acteurs, réalisateurs, catégories)
+ * via DetailfilmTask, affiche les commentaires via GetCommentsTask,
+ * et permet d'ajouter le film au panier ou de poster un commentaire.
+ */
 public class DetailfilmActivity extends AppCompatActivity {
 
+    /** JSON brut du détail du film retourné par l'API. */
     private String detailFilmResultat = "";
+
+    /** Identifiant du film transmis par ListefilmsActivity via l'Intent. */
     private String filmId = "";
+
+    /** Titre du film transmis par ListefilmsActivity (pour les logs). */
     private String filmTitle = "";
+
+    /** Objet Film chargé depuis l'API, utilisé lors de l'ajout au panier. */
     private Film filmActuel = null;
+
+    /** Indicateur de chargement affiché pendant l'appel API initial. */
     private ProgressBar progressBarDetail;
+
+    /** ScrollView contenant le contenu — masqué pendant le chargement. */
     private ScrollView scrollViewContent;
+
+    /** Gestionnaire de session pour récupérer le customerId et l'URL serveur. */
     private SessionManager sessionManager;
+
+    /** Conteneur dynamique dans lequel les commentaires sont ajoutés programmatiquement. */
     private LinearLayout layoutCommentaires;
+
+    /** Champ de saisie du nouveau commentaire. */
     private EditText etNouveauCommentaire;
 
+    /**
+     * Initialise l'Activity, récupère l'ID du film depuis l'Intent,
+     * déclenche le chargement du détail et des commentaires.
+     *
+     * @param savedInstanceState état sauvegardé de l'instance.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailfilm);
 
-        // Initialiser le SessionManager
         sessionManager = new SessionManager(this);
 
-        // Initialiser les vues
+        // Liaison des vues avec les éléments du layout
         progressBarDetail = findViewById(R.id.progressBarDetail);
         scrollViewContent = findViewById(R.id.scrollViewContent);
         layoutCommentaires = findViewById(R.id.layoutCommentaires);
         etNouveauCommentaire = findViewById(R.id.etNouveauCommentaire);
 
-        // Afficher le loader et cacher le contenu
+        // Affiche le loader et masque le contenu pendant le chargement
         progressBarDetail.setVisibility(View.VISIBLE);
         scrollViewContent.setVisibility(View.GONE);
 
-        // Récupérer l'ID du film passé depuis ListefilmsActivity
+        // Récupération de l'ID et du titre du film transmis par ListefilmsActivity
         Intent intent = getIntent();
         filmId = intent.getStringExtra("FILM_ID");
         filmTitle = intent.getStringExtra("FILM_TITLE");
+        Log.d("DetailfilmActivity", "Film ID: " + filmId);
 
-        Log.d("DetailfilmActivity", "Page détail affichée pour film ID: " + filmId);
-
-        // Configurer le bouton d'envoi de commentaire
+        // Listener du bouton d'envoi de commentaire
         Button btnEnvoyerCommentaire = findViewById(R.id.btnEnvoyerCommentaire);
         btnEnvoyerCommentaire.setOnClickListener(v -> onEnvoyerCommentaireClicked());
 
-        // Appeler le service REST pour récupérer les détails du film
+        // Chargement du détail du film via l'API
         URL urlAAppeler = null;
         try {
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/" + filmId);
             new DetailfilmTask(this).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug",">>>Pour DetailfilmTask - MalformedURLException mue="+mue.toString());
+            Log.d("mydebug", ">>>DetailfilmTask - MalformedURLException: " + mue.toString());
             progressBarDetail.setVisibility(View.GONE);
         } finally {
             urlAAppeler = null;
         }
 
-        // Charger les commentaires du film
+        // Chargement des commentaires du film (appel indépendant)
         chargerCommentaires();
     }
 
+    /**
+     * Callback appelé par DetailfilmTask après réception de la réponse API.
+     * Masque le loader, affiche le contenu et déclenche l'affichage du film.
+     *
+     * @param resultatAppelRest JSON du film retourné par l'API.
+     */
     public void mettreAJourActivityApresAppelRest(String resultatAppelRest) {
-        // Masquer le loader et afficher le contenu
         progressBarDetail.setVisibility(View.GONE);
         scrollViewContent.setVisibility(View.VISIBLE);
 
         detailFilmResultat = resultatAppelRest;
-        Log.d("mydebug",">>>Pour DetailfilmActivity - mettreAJourActivityApresAppelRest="+detailFilmResultat);
+        Log.d("mydebug", ">>>DetailfilmActivity - résultat reçu");
 
-        // Vérifier que le résultat n'est pas vide avant d'afficher
         if (resultatAppelRest != null && !resultatAppelRest.trim().isEmpty()) {
             afficherDetailFilm(resultatAppelRest);
         } else {
-            Log.e("mydebug", ">>>Erreur : Le résultat de l'appel REST est vide ou null");
+            Log.e("mydebug", ">>>Erreur : résultat vide ou null");
         }
     }
 
-    // Affichage des détails du film
+    /**
+     * Désérialise le JSON et remplit les TextViews avec les informations du film.
+     * Construit les listes de catégories, réalisateurs et acteurs par concaténation.
+     * Configure également le bouton "Commander ce film".
+     *
+     * @param filmJson JSON brut du film retourné par l'API.
+     */
     public void afficherDetailFilm(String filmJson) {
         Gson gson = new Gson();
         Film film = gson.fromJson(filmJson, Film.class);
 
-        // Vérifier que le JSON a été correctement parsé
         if (film == null) {
-            Log.e("mydebug", ">>>Erreur : Impossible de parser le JSON en Film");
+            Log.e("mydebug", ">>>Impossible de parser le JSON en Film");
             return;
         }
 
-        // Stocker le film actuel pour l'ajouter au panier
+        // Sauvegarde du film pour l'ajout au panier
         this.filmActuel = film;
-
-        // Contrôle
         System.out.println(">>>>Détail du film : " + film.getTitle());
 
-        // Afficher les informations dans les TextViews
+        // Liaison des TextViews du layout
         TextView tvTitle = findViewById(R.id.tvFilmTitle);
         TextView tvDescription = findViewById(R.id.tvFilmDescription);
         TextView tvYearAndCategory = findViewById(R.id.tvFilmYearAndCategory);
@@ -125,27 +159,24 @@ public class DetailfilmActivity extends AppCompatActivity {
         TextView tvActors = findViewById(R.id.tvFilmActors);
         TextView tvCategories = findViewById(R.id.tvFilmCategories);
 
-        // Afficher le titre
         tvTitle.setText(film.getTitle());
-
-        // Afficher la description
         tvDescription.setText(film.getDescription());
 
-        // Construire "Année • Catégorie"
+        // Format "Année • Catégorie principale"
         String yearAndCategory = film.getRelease_year();
         if (film.getCategories() != null && !film.getCategories().isEmpty()) {
             yearAndCategory += " • " + film.getCategories().get(0).toString();
         }
         tvYearAndCategory.setText(yearAndCategory);
 
-        // Afficher le premier acteur principal
+        // Affiche le premier acteur principal en vedette
         if (film.getActors() != null && !film.getActors().isEmpty()) {
             tvActor.setText(film.getActors().get(0).toString());
         } else {
             tvActor.setText("");
         }
 
-        // Afficher toutes les catégories
+        // Construction de la liste des catégories séparées par des virgules
         if (film.getCategories() != null && !film.getCategories().isEmpty()) {
             StringBuilder categoriesText = new StringBuilder();
             for (int i = 0; i < film.getCategories().size(); i++) {
@@ -157,7 +188,7 @@ public class DetailfilmActivity extends AppCompatActivity {
             tvCategories.setText("Aucune catégorie");
         }
 
-        // Afficher tous les réalisateurs
+        // Construction de la liste des réalisateurs séparés par des virgules
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             StringBuilder directorsText = new StringBuilder();
             for (int i = 0; i < film.getDirectors().size(); i++) {
@@ -169,7 +200,7 @@ public class DetailfilmActivity extends AppCompatActivity {
             tvDirectors.setText("Aucun réalisateur");
         }
 
-        // Afficher tous les acteurs
+        // Construction de la liste de tous les acteurs séparés par des virgules
         if (film.getActors() != null && !film.getActors().isEmpty()) {
             StringBuilder actorsText = new StringBuilder();
             for (int i = 0; i < film.getActors().size(); i++) {
@@ -181,36 +212,42 @@ public class DetailfilmActivity extends AppCompatActivity {
             tvActors.setText("Aucun acteur");
         }
 
-        // Configurer le bouton Commander
+        // Listener du bouton Commander
         Button btnCommander = findViewById(R.id.btnCommander);
         btnCommander.setOnClickListener(v -> onCommanderClicked());
     }
 
-    // Charger les commentaires du film
+    /**
+     * Lance GetCommentsTask pour charger les commentaires du film depuis l'API.
+     * Utilise POST /films/commentaire avec le filmId dans le corps JSON.
+     */
     private void chargerCommentaires() {
         URL urlAAppeler = null;
         try {
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/commentaire");
             new GetCommentsTask(this, filmId).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour GetCommentsTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>GetCommentsTask - MalformedURLException: " + mue.toString());
         } finally {
             urlAAppeler = null;
         }
     }
 
-    // Mettre à jour l'affichage des commentaires après réception des données
+    /**
+     * Callback appelé par GetCommentsTask après réception des commentaires.
+     * Parse la liste JSON et délègue l'affichage ou affiche un message d'absence.
+     *
+     * @param resultatAppelRest JSON de la liste des commentaires.
+     */
     public void mettreAJourCommentairesApresAppelRest(String resultatAppelRest) {
         Log.d("mydebug", ">>>Commentaires reçus: " + resultatAppelRest);
 
         if (resultatAppelRest == null || resultatAppelRest.trim().isEmpty() || resultatAppelRest.equals("[]")) {
-            // Aucun commentaire
             afficherMessageAucunCommentaire();
             return;
         }
 
         try {
-            // Parser le JSON en liste de commentaires
             Gson gson = new Gson();
             Type commentListType = new TypeToken<ArrayList<FilmComment>>(){}.getType();
             ArrayList<FilmComment> commentaires = gson.fromJson(resultatAppelRest, commentListType);
@@ -226,12 +263,17 @@ public class DetailfilmActivity extends AppCompatActivity {
         }
     }
 
-    // Afficher la liste des commentaires
+    /**
+     * Construit dynamiquement les vues des commentaires et les ajoute au layoutCommentaires.
+     * Chaque commentaire affiche l'auteur, la date et le texte.
+     *
+     * @param commentaires liste des commentaires à afficher.
+     */
     private void afficherCommentaires(ArrayList<FilmComment> commentaires) {
         layoutCommentaires.removeAllViews();
 
         for (FilmComment comment : commentaires) {
-            // Créer une vue pour chaque commentaire
+            // Conteneur vertical pour un commentaire
             LinearLayout commentView = new LinearLayout(this);
             commentView.setOrientation(LinearLayout.VERTICAL);
             commentView.setBackgroundColor(0xFFFFFFFF);
@@ -244,7 +286,7 @@ public class DetailfilmActivity extends AppCompatActivity {
             layoutParams.setMargins(0, 0, 0, 16);
             commentView.setLayoutParams(layoutParams);
 
-            // Ligne avec nom et date
+            // En-tête : nom de l'auteur (gauche) + date (droite)
             LinearLayout headerLayout = new LinearLayout(this);
             headerLayout.setOrientation(LinearLayout.HORIZONTAL);
             headerLayout.setLayoutParams(new LinearLayout.LayoutParams(
@@ -252,20 +294,18 @@ public class DetailfilmActivity extends AppCompatActivity {
                     LinearLayout.LayoutParams.WRAP_CONTENT
             ));
 
-            // Nom de l'auteur
+            // Nom de l'auteur en gras
             TextView tvAuthor = new TextView(this);
             tvAuthor.setText(comment.getCustomerName() != null ? comment.getCustomerName() : "Utilisateur");
             tvAuthor.setTextSize(14);
             tvAuthor.setTextColor(0xFF000000);
             tvAuthor.setTypeface(null, android.graphics.Typeface.BOLD);
             LinearLayout.LayoutParams authorParams = new LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1.0f
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f
             );
             tvAuthor.setLayoutParams(authorParams);
 
-            // Date du commentaire
+            // Date formatée en dd/MM/yyyy
             TextView tvDate = new TextView(this);
             tvDate.setText(formatDate(comment.getCreatedDate()));
             tvDate.setTextSize(12);
@@ -288,43 +328,50 @@ public class DetailfilmActivity extends AppCompatActivity {
 
             commentView.addView(headerLayout);
             commentView.addView(tvCommentText);
-
             layoutCommentaires.addView(commentView);
         }
     }
 
-    // Afficher un message quand il n'y a pas de commentaires
+    /**
+     * Affiche un message d'invitation quand il n'y a aucun commentaire pour ce film.
+     */
     private void afficherMessageAucunCommentaire() {
         layoutCommentaires.removeAllViews();
-
         TextView tvMessage = new TextView(this);
         tvMessage.setText("Aucun commentaire pour le moment. Soyez le premier à commenter !");
         tvMessage.setTextSize(14);
         tvMessage.setTextColor(0xFF666666);
         tvMessage.setPadding(0, 16, 0, 16);
-
         layoutCommentaires.addView(tvMessage);
     }
 
-    // Formater la date
+    /**
+     * Convertit une date ISO 8601 (yyyy-MM-dd'T'HH:mm:ss) en format lisible (dd/MM/yyyy).
+     * Retourne les 10 premiers caractères en cas d'échec du parsing.
+     *
+     * @param dateString date au format ISO 8601.
+     * @return date formatée en dd/MM/yyyy, ou chaîne vide si null/vide.
+     */
     private String formatDate(String dateString) {
         if (dateString == null || dateString.isEmpty()) {
             return "";
         }
-
         try {
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
             Date date = inputFormat.parse(dateString);
             return outputFormat.format(date);
         } catch (ParseException e) {
             Log.e("mydebug", ">>>Erreur parsing date: " + e.toString());
+            // Fallback : retourne les 10 premiers caractères (partie date)
             return dateString.substring(0, Math.min(10, dateString.length()));
         }
     }
 
-    // Envoyer un nouveau commentaire
+    /**
+     * Valide le champ de saisie et lance AddCommentTask pour envoyer le commentaire.
+     * Vérifie que le texte n'est pas vide et que l'utilisateur est connecté.
+     */
     private void onEnvoyerCommentaireClicked() {
         String commentText = etNouveauCommentaire.getText().toString().trim();
 
@@ -334,7 +381,6 @@ public class DetailfilmActivity extends AppCompatActivity {
         }
 
         int customerId = sessionManager.getCustomerId();
-
         if (customerId == -1) {
             Toast.makeText(this, "Erreur: Utilisateur non connecté", Toast.LENGTH_SHORT).show();
             return;
@@ -345,25 +391,31 @@ public class DetailfilmActivity extends AppCompatActivity {
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/films/commentaire/add");
             new AddCommentTask(this, filmId, String.valueOf(customerId), commentText).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour AddCommentTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>AddCommentTask - MalformedURLException: " + mue.toString());
             Toast.makeText(this, "Erreur lors de l'envoi", Toast.LENGTH_SHORT).show();
         } finally {
             urlAAppeler = null;
         }
     }
 
-   
+    /**
+     * Callback appelé par AddCommentTask après ajout du commentaire.
+     * Vide le champ de saisie, affiche un toast et recharge les commentaires.
+     *
+     * @param resultat réponse de l'API.
+     */
     public void commentaireAjouteAvecSucces(String resultat) {
         Log.d("mydebug", ">>>Commentaire ajouté: " + resultat);
-
         etNouveauCommentaire.setText("");
-
         Toast.makeText(this, "Commentaire ajouté avec succès", Toast.LENGTH_SHORT).show();
-
+        // Rechargement pour afficher le nouveau commentaire immédiatement
         chargerCommentaires();
     }
 
-    // Méthode appelée quand on clique sur "Commander ce film"
+    /**
+     * Déclenché par le bouton "Commander ce film".
+     * Vérifie que le film est chargé et l'utilisateur connecté avant l'appel API.
+     */
     public void onCommanderClicked() {
         if (filmActuel == null) {
             Toast.makeText(this, "Erreur: Film non chargé", Toast.LENGTH_SHORT).show();
@@ -371,41 +423,49 @@ public class DetailfilmActivity extends AppCompatActivity {
         }
 
         int customerId = sessionManager.getCustomerId();
-
         if (customerId == -1) {
             Toast.makeText(this, "Erreur: Utilisateur non connecté", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Appeler l'API pour ajouter le film au panier
+        // Ajout du film au panier via l'API
         URL urlAAppeler = null;
         try {
             urlAAppeler = new URL(sessionManager.getBaseUrl() + "/cart/add");
             new AddToCartTask(this, filmId, String.valueOf(customerId)).execute(urlAAppeler);
         } catch (MalformedURLException mue) {
-            Log.d("mydebug", ">>>Pour AddToCartTask - MalformedURLException mue=" + mue.toString());
+            Log.d("mydebug", ">>>AddToCartTask - MalformedURLException: " + mue.toString());
             Toast.makeText(this, "Erreur lors de l'ajout au panier", Toast.LENGTH_SHORT).show();
         } finally {
             urlAAppeler = null;
         }
     }
 
-    // Callback appelé après l'ajout au panier via l'API
+    /**
+     * Callback appelé par AddToCartTask après ajout au panier depuis le détail.
+     * En cas de succès, ouvre directement PanierActivity.
+     *
+     * @param resultat réponse de l'API ou "ERROR".
+     */
     public void filmAjouteAuPanierAvecSucces(String resultat) {
         Log.d("mydebug", ">>>Film ajouté au panier: " + resultat);
 
         if (resultat != null && !resultat.equals("ERROR")) {
             Toast.makeText(this, "Film ajouté au panier", Toast.LENGTH_SHORT).show();
-            Log.d("DetailfilmActivity", "Film ajouté au panier: " + filmActuel.getTitle());
-
-            // Ouvrir l'écran du panier
-            Intent intent = new Intent(this, PanierActivity.class);
-            startActivity(intent);
+            Log.d("DetailfilmActivity", "Film ajouté: " + filmActuel.getTitle());
+            // Redirection automatique vers le panier après ajout
+            startActivity(new Intent(this, PanierActivity.class));
         } else {
             Toast.makeText(this, "Erreur: Film non disponible ou déjà dans le panier", Toast.LENGTH_LONG).show();
         }
     }
 
+    /**
+     * Callback du bouton Retour (défini via android:onClick dans le layout).
+     * Ferme l'Activity et retourne à ListefilmsActivity.
+     *
+     * @param view vue ayant déclenché l'événement.
+     */
     public void onRetourClicked(android.view.View view) {
         Log.d("DetailfilmActivity", "Retour à la liste des films");
         finish();

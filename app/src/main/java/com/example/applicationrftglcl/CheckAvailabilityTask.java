@@ -14,16 +14,37 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
+/**
+ * Tâche asynchrone vérifiant la disponibilité d'un film en stock via GET /inventories/available/film/{id}.
+ * Active ou désactive le bouton "Ajouter" de la liste selon le résultat.
+ * Retourne un booléen indiquant si au moins un exemplaire est disponible.
+ */
 public class CheckAvailabilityTask extends AsyncTask<URL, Integer, Boolean> {
 
+    /** Bouton "Ajouter" à activer ou désactiver selon la disponibilité. */
     private Button btnAjouter;
+
+    /** Identifiant du film dont on vérifie la disponibilité. */
     private String filmId;
 
+    /**
+     * Constructeur de la tâche.
+     *
+     * @param btnAjouter bouton à mettre à jour après vérification.
+     * @param filmId     identifiant du film à vérifier.
+     */
     public CheckAvailabilityTask(Button btnAjouter, String filmId) {
         this.btnAjouter = btnAjouter;
         this.filmId = filmId;
     }
 
+    /**
+     * Exécuté sur le thread de fond — appelle l'API et parse la liste d'inventaires.
+     * Un film est considéré disponible si la liste retournée n'est pas vide.
+     *
+     * @param urls URL cible (index 0 = /inventories/available/film/{id}).
+     * @return true si au moins un exemplaire est disponible, false sinon.
+     */
     @Override
     protected Boolean doInBackground(URL... urls) {
         URL urlAAppeler = urls[0];
@@ -43,23 +64,21 @@ public class CheckAvailabilityTask extends AsyncTask<URL, Integer, Boolean> {
             int responseCode = urlConnection.getResponseCode();
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Lecture de la réponse
                 BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                 String inputLine;
                 StringBuilder response = new StringBuilder();
-
                 while ((inputLine = in.readLine()) != null) {
                     response.append(inputLine);
                 }
                 in.close();
 
-                String jsonResult = response.toString();
-
-                // Parser le JSON pour obtenir la liste des inventaires
+                // Parse la liste des inventaires disponibles
                 Gson gson = new Gson();
                 Type inventoryListType = new TypeToken<ArrayList<Inventory>>(){}.getType();
-                ArrayList<Inventory> inventories = gson.fromJson(jsonResult, inventoryListType);
+                ArrayList<Inventory> inventories = gson.fromJson(response.toString(), inventoryListType);
 
-                // Si la liste n'est pas vide, le film est disponible
+                // Disponible si au moins un exemplaire existe dans la liste
                 isAvailable = inventories != null && !inventories.isEmpty();
             }
 
@@ -70,22 +89,25 @@ public class CheckAvailabilityTask extends AsyncTask<URL, Integer, Boolean> {
                 urlConnection.disconnect();
             }
         }
-
         return isAvailable;
     }
 
+    /**
+     * Exécuté sur le thread principal — met à jour l'état du bouton "Ajouter".
+     * Si disponible : bouton actif et opaque. Sinon : désactivé et semi-transparent.
+     *
+     * @param isAvailable true si le film est en stock.
+     */
     @Override
     protected void onPostExecute(Boolean isAvailable) {
         if (btnAjouter != null) {
             btnAjouter.setEnabled(isAvailable);
-
-            // Changer l'apparence du bouton selon la disponibilité
             if (isAvailable) {
                 btnAjouter.setText("Ajouter");
-                btnAjouter.setAlpha(1.0f);
+                btnAjouter.setAlpha(1.0f);       // Opacité pleine = disponible
             } else {
                 btnAjouter.setText("Indisponible");
-                btnAjouter.setAlpha(0.5f);
+                btnAjouter.setAlpha(0.5f);        // Semi-transparent = indisponible
             }
         }
     }
